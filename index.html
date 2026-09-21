@@ -1,225 +1,926 @@
-<!DOCTYPE html>
-<html lang="es">
+const pages = document.querySelectorAll(".page");
+const portfolioView = document.getElementById("portfolio-view");
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALGORITMOS Y ESTRUCTURA DE DATOS | Portafolio</title>
-  <link rel="stylesheet" href="estilos.css">
-</head>
+const units = [
+  { id: 1, name: "UNIDAD 01" },
+  { id: 2, name: "UNIDAD 02" },
+  { id: 3, name: "UNIDAD 03" },
+  { id: 4, name: "UNIDAD 04" }
+];
 
-<body>
 
-  <!-- FONDO -->
-  <div class="background"></div>
-  <div class="overlay"></div>
+// ========================================
+// NAVEGACIÓN
+// ========================================
 
-  <!-- LOGO UPLA -->
-  <div class="logo-upla">
-    <img src="logoupla.png" alt="Logo UPLA">
-  </div>
+function showPage(id) {
 
-  <main id="app">
+  pages.forEach(page => {
+    page.classList.toggle("active", page.id === id);
+  });
 
-    <!-- ========================= -->
-    <!-- BIENVENIDA -->
-    <!-- ========================= -->
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
 
-    <section id="home" class="page active">
 
-      <div class="welcome-layout">
+document.addEventListener("click", event => {
 
-        <div class="welcome-content">
+  const target = event.target.closest("[data-page]");
 
-          <p class="eyebrow">PORTAFOLIO ACADÉMICO</p>
+  if (!target) return;
 
-          <h1>BIENVENIDO</h1>
+  const page = target.dataset.page;
 
-          <h2>ALGORITMOS Y ESTRUCTURA DE DATOS</h2>
+  if (page === "portfolio") {
+    renderUnits();
+  }
 
-          <h3 class="university-name">
-            UNIVERSIDAD PERUANA LOS ANDES
-          </h3>
+  showPage(page);
 
-          <p class="student-name">
-            Carranza Romaní Franklin
-          </p>
+});
 
-          <div class="actions">
 
-            <button
-              class="btn primary"
-              data-page="profile">
-              Visitar perfil
-            </button>
+// ========================================
+// MOSTRAR UNIDADES
+// ========================================
 
-            <button
-              class="btn secondary"
-              data-page="portfolio">
-              Portafolio
-            </button>
+async function renderUnits() {
 
+  const unitCards = await Promise.all(
+
+    units.map(async unit => {
+
+      let total = 0;
+
+      for (let week = 1; week <= 4; week++) {
+
+        const path =
+          `unidad-${String(unit.id).padStart(2, "0")}/semana-${String(week).padStart(2, "0")}`;
+
+        const files = await getFiles(path);
+
+        total += files.length;
+      }
+
+      return `
+        <article
+          class="folder"
+          data-unit="${unit.id}">
+
+          <div class="folder-icon">
+            ⚔️
           </div>
 
-        </div>
+          <h2>
+            ${unit.name}
+          </h2>
 
-        <!-- FOTO DEL ESTUDIANTE -->
+          <p>
+            4 semanas
+          </p>
 
-        <div class="student-photo">
+          <p>
+            📦 ${total} archivo${total === 1 ? "" : "s"}
+          </p>
 
-          <img
-            src="foto-estudiante.jpg"
-            alt="Foto del estudiante"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        </article>
+      `;
 
-          <div class="photo-placeholder">
-            FOTO
+    })
+
+  );
+
+
+  portfolioView.innerHTML = `
+
+    <div class="explorer-header">
+
+      <p class="eyebrow">
+        EXPLORADOR ACADÉMICO
+      </p>
+
+      <h1>
+        PORTAFOLIO
+      </h1>
+
+      <p>
+        Selecciona una unidad para acceder a sus semanas.
+      </p>
+
+    </div>
+
+
+    <div class="folder-grid">
+
+      ${unitCards.join("")}
+
+    </div>
+
+  `;
+
+
+  document
+    .querySelectorAll("[data-unit]")
+    .forEach(folder => {
+
+      folder.addEventListener("click", () => {
+
+        renderWeeks(
+          Number(folder.dataset.unit)
+        );
+
+      });
+
+    });
+
+}
+
+
+// ========================================
+// MOSTRAR SEMANAS
+// ========================================
+
+async function renderWeeks(unitId) {
+
+  const unit = units.find(
+    item => item.id === unitId
+  );
+
+
+  const weekCards = await Promise.all(
+
+    [1, 2, 3, 4].map(async week => {
+
+      const path =
+        `unidad-${String(unitId).padStart(2, "0")}/semana-${String(week).padStart(2, "0")}`;
+
+      const files = await getFiles(path);
+
+      return `
+
+        <article
+          class="week"
+          data-week="${week}">
+
+          <div class="week-icon">
+            📜
           </div>
 
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- ========================= -->
-    <!-- PERFIL -->
-    <!-- ========================= -->
-
-    <section id="profile" class="page">
-
-      <div class="topbar">
-
-        <button
-          class="back"
-          data-page="home">
-          ← Volver
-        </button>
-
-        <span>PERFIL</span>
-
-      </div>
-
-
-      <div class="profile-card">
-
-        <!-- FOTO -->
-
-        <div class="profile-photo">
-
-          <img
-            src="foto-estudiante.jpg"
-            alt="Foto de Franklin Carranza Romaní"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-
-          <div class="photo-placeholder">
-            FOTO
-          </div>
-
-        </div>
-
-
-        <!-- INFORMACIÓN -->
-
-        <div class="profile-info">
-
-          <p class="eyebrow">
-            ESTUDIANTE
-          </p>
-
-          <h1>
-            Carranza Romaní Franklin
-          </h1>
+          <h2>
+            SEMANA ${week}
+          </h2>
 
           <p>
-            <strong>Carrera:</strong>
-            Ingeniería de Sistemas
+            ${files.length} archivo${files.length === 1 ? "" : "s"}
           </p>
 
-          <p>
-            <strong>Curso:</strong>
-            ALGORITMOS Y ESTRUCTURA DE DATOS
-          </p>
+        </article>
 
-          <p>
-            <strong>Docente:</strong>
-            Fernandez Bejarano Raul Enrique
-          </p>
+      `;
 
-          <p>
-            <strong>Correo:</strong>
-            t01266e@ms.upla.edu.pe
-          </p>
+    })
 
-          <p>
-            <strong>Código:</strong>
-            T01266E
-          </p>
+  );
 
 
-          <!-- DESCRIPCIÓN -->
+  portfolioView.innerHTML = `
 
-          <div class="description">
+    <div class="topbar">
 
-            <h3>
-              Descripción
-            </h3>
+      <button
+        class="back"
+        id="back-units">
+
+        ← Unidades
+
+      </button>
+
+      <span>
+        ${unit.name}
+      </span>
+
+    </div>
+
+
+    <div class="explorer-header">
+
+      <p class="eyebrow">
+        EXPLORADOR / ${unit.name}
+      </p>
+
+      <h1>
+        SEMANAS
+      </h1>
+
+      <p>
+        Selecciona una semana para ver sus archivos.
+      </p>
+
+    </div>
+
+
+    <div class="week-grid">
+
+      ${weekCards.join("")}
+
+    </div>
+
+  `;
+
+
+  document
+    .getElementById("back-units")
+    .addEventListener(
+      "click",
+      renderUnits
+    );
+
+
+  document
+    .querySelectorAll("[data-week]")
+    .forEach(card => {
+
+      card.addEventListener("click", () => {
+
+        renderFiles(
+          unitId,
+          Number(card.dataset.week)
+        );
+
+      });
+
+    });
+
+}
+
+
+// ========================================
+// BASE DE DATOS LOCAL
+// ========================================
+
+let db;
+
+
+function openDB() {
+
+  return new Promise((resolve, reject) => {
+
+    const request = indexedDB.open(
+      "PortafolioBaseDatosII",
+      1
+    );
+
+
+    request.onupgradeneeded = event => {
+
+      db = event.target.result;
+
+
+      if (!db.objectStoreNames.contains("files")) {
+
+        const store =
+          db.createObjectStore(
+            "files",
+            {
+              keyPath: "id",
+              autoIncrement: true
+            }
+          );
+
+
+        store.createIndex(
+          "folder",
+          "folder",
+          {
+            unique: false
+          }
+        );
+
+      }
+
+    };
+
+
+    request.onsuccess = event => {
+
+      db = event.target.result;
+
+      resolve(db);
+
+    };
+
+
+    request.onerror = event => {
+
+      reject(event.target.error);
+
+    };
+
+  });
+
+}
+
+
+// ========================================
+// OBTENER ARCHIVOS
+// ========================================
+
+function getFiles(folder) {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      db.transaction(
+        ["files"],
+        "readonly"
+      );
+
+
+    const store =
+      transaction.objectStore("files");
+
+
+    const index =
+      store.index("folder");
+
+
+    const request =
+      index.getAll(folder);
+
+
+    request.onsuccess = () => {
+
+      resolve(request.result);
+
+    };
+
+
+    request.onerror = () => {
+
+      reject(request.error);
+
+    };
+
+  });
+
+}
+
+
+// ========================================
+// GUARDAR ARCHIVOS
+// ========================================
+
+function saveFiles(folder, fileList) {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      db.transaction(
+        ["files"],
+        "readwrite"
+      );
+
+
+    const store =
+      transaction.objectStore("files");
+
+
+    for (const file of fileList) {
+
+      store.add({
+
+        folder: folder,
+
+        name: file.name,
+
+        type: file.type || "Archivo",
+
+        size: file.size,
+
+        file: file,
+
+        date: new Date().toLocaleString()
+
+      });
+
+    }
+
+
+    transaction.oncomplete = () => {
+
+      resolve();
+
+    };
+
+
+    transaction.onerror = event => {
+
+      reject(event.target.error);
+
+    };
+
+  });
+
+}
+
+
+// ========================================
+// MOSTRAR ARCHIVOS
+// ========================================
+
+async function renderFiles(unitId, weekId) {
+
+  const path =
+    `unidad-${String(unitId).padStart(2, "0")}/semana-${String(weekId).padStart(2, "0")}`;
+
+
+  const files =
+    await getFiles(path);
+
+
+  portfolioView.innerHTML = `
+
+    <div class="topbar">
+
+      <button
+        class="back"
+        id="back-weeks">
+
+        ← Semanas
+
+      </button>
+
+      <span>
+        U${unitId} / S${weekId}
+      </span>
+
+    </div>
+
+
+    <div class="explorer-header">
+
+      <p class="eyebrow">
+        ${path}
+      </p>
+
+      <h1>
+        SEMANA ${weekId}
+      </h1>
+
+      <p>
+        ${files.length}
+        archivo${files.length === 1 ? "" : "s"} en esta semana.
+      </p>
+
+    </div>
+
+
+    <div
+      class="file-list"
+      id="file-list">
+
+      ${
+        files.length === 0
+
+        ?
+
+        `
+          <div class="empty">
 
             <p>
-              Soy Franklin, estudiante de Ingeniería de Sistemas
-              en la Universidad Peruana Los Andes, con código
-              CÓDIGO POR COMPLETAR. Este portafolio reúne mi
-              proceso de aprendizaje en Algoritmos y Estructuras de Datos, mis
-              entregas y mis objetivos de formación. Me interesa
-              conectar la lógica, la creatividad y los datos para
-              construir soluciones útiles.
+              📦 INVENTARIO VACÍO
             </p>
+
+            <small>
+              Agrega tus archivos usando el botón de abajo.
+            </small>
+
+          </div>
+        `
+
+        :
+
+        files.map(file => `
+
+          <div class="file">
+
+            <div class="file-icon">
+              ${getFileIcon(file.name)}
+            </div>
+
+
+            <div class="file-info">
+
+              <strong class="file-name">
+                ${escapeHTML(file.name)}
+              </strong>
+
+              <small>
+                ${getFileType(file.name)}
+                ·
+                ${formatSize(file.size)}
+                ·
+                ${file.date || "Sin fecha"}
+              </small>
+
+            </div>
+
+
+            <div class="file-actions">
+
+              <button
+                class="file-btn"
+                onclick="openFile(${file.id})">
+
+                👁 VER
+
+              </button>
+
+
+              <button
+                class="file-btn delete"
+                onclick="deleteFile(${file.id}, ${unitId}, ${weekId})">
+
+                🗑 ELIMINAR
+
+              </button>
+
+            </div>
 
           </div>
 
-        </div>
+        `).join("")
 
-      </div>
+      }
 
-    </section>
-
-
-    <!-- ========================= -->
-    <!-- PORTAFOLIO -->
-    <!-- ========================= -->
-
-    <section id="portfolio" class="page">
-
-      <div class="topbar">
-
-        <button
-          class="back"
-          data-page="home">
-          ← Volver
-        </button>
-
-        <span>
-          PORTAFOLIO
-        </span>
-
-      </div>
-
-      <!-- AQUÍ JAVASCRIPT MOSTRARÁ LAS UNIDADES -->
-
-      <div id="portfolio-view"></div>
-
-      <input type="file" id="file-picker" multiple hidden>
-
-    </section>
-
-  </main>
+    </div>
 
 
-  <!-- JAVASCRIPT -->
+    <div class="add-file-container">
 
-  <script src="script.js"></script>
+      <button
+        class="btn primary"
+        id="add-file">
 
-</body>
+        ＋ AGREGAR ARCHIVO
 
-</html>
+      </button>
+
+    </div>
+
+
+    <input
+      type="file"
+      id="file-picker"
+      multiple
+      hidden>
+
+  `;
+
+
+  document
+    .getElementById("back-weeks")
+    .addEventListener(
+      "click",
+      () => renderWeeks(unitId)
+    );
+
+
+  document
+    .getElementById("add-file")
+    .addEventListener(
+      "click",
+      () => {
+
+        document
+          .getElementById("file-picker")
+          .click();
+
+      }
+    );
+
+
+  document
+    .getElementById("file-picker")
+    .addEventListener(
+      "change",
+      async function () {
+
+        const archivos =
+          this.files;
+
+
+        if (archivos.length === 0) {
+          return;
+        }
+
+
+        try {
+
+          await saveFiles(
+            path,
+            archivos
+          );
+
+
+          this.value = "";
+
+
+          await renderFiles(
+            unitId,
+            weekId
+          );
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          alert(
+            "No se pudieron guardar los archivos."
+          );
+
+        }
+
+      }
+    );
+
+}
+
+
+// ========================================
+// ABRIR ARCHIVO
+// ========================================
+
+function openFile(id) {
+
+  const transaction =
+    db.transaction(
+      ["files"],
+      "readonly"
+    );
+
+
+  const store =
+    transaction.objectStore("files");
+
+
+  const request =
+    store.get(id);
+
+
+  request.onsuccess = () => {
+
+    const data =
+      request.result;
+
+
+    if (!data) {
+
+      alert(
+        "No se encontró el archivo."
+      );
+
+      return;
+
+    }
+
+
+    const url =
+      URL.createObjectURL(
+        data.file
+      );
+
+
+    const nuevaVentana =
+      window.open(
+        url,
+        "_blank"
+      );
+
+
+    if (!nuevaVentana) {
+
+      alert(
+        "El navegador bloqueó la ventana. Permite ventanas emergentes para este sitio."
+      );
+
+    }
+
+    setTimeout(() => {
+
+      URL.revokeObjectURL(url);
+
+    }, 60000);
+
+  };
+
+}
+
+
+// ========================================
+// ELIMINAR ARCHIVO
+// ========================================
+
+function deleteFile(id, unitId, weekId) {
+
+  const confirmar =
+    confirm(
+      "¿Quieres eliminar este archivo?"
+    );
+
+
+  if (!confirmar) {
+    return;
+  }
+
+
+  const transaction =
+    db.transaction(
+      ["files"],
+      "readwrite"
+    );
+
+
+  const store =
+    transaction.objectStore("files");
+
+
+  store.delete(id);
+
+
+  transaction.oncomplete = () => {
+
+    renderFiles(
+      unitId,
+      weekId
+    );
+
+  };
+
+
+  transaction.onerror = () => {
+
+    alert(
+      "No se pudo eliminar el archivo."
+    );
+
+  };
+
+}
+
+
+// ========================================
+// ICONO SEGÚN TIPO DE ARCHIVO
+// ========================================
+
+function getFileIcon(name) {
+
+  const extension =
+    name
+      .split(".")
+      .pop()
+      .toLowerCase();
+
+
+  const icons = {
+
+    pdf: "📕",
+
+    doc: "📘",
+    docx: "📘",
+
+    xls: "📗",
+    xlsx: "📗",
+
+    ppt: "📙",
+    pptx: "📙",
+
+    jpg: "🖼️",
+    jpeg: "🖼️",
+    png: "🖼️",
+    gif: "🖼️",
+
+    mp4: "🎬",
+    avi: "🎬",
+    mov: "🎬",
+
+    mp3: "🎵",
+    wav: "🎵",
+
+    zip: "🗜️",
+    rar: "🗜️",
+
+    txt: "📄",
+
+    html: "🌐",
+    css: "🎨",
+    js: "⚙️",
+    php: "🐘"
+
+  };
+
+
+  return icons[extension] || "📄";
+
+}
+
+
+// ========================================
+// TIPO DE ARCHIVO
+// ========================================
+
+function getFileType(name) {
+
+  const extension =
+    name
+      .split(".")
+      .pop()
+      .toUpperCase();
+
+
+  if (!extension || extension === name.toUpperCase()) {
+    return "ARCHIVO";
+  }
+
+
+  return extension;
+}
+
+
+// ========================================
+// FORMATO DEL TAMAÑO
+// ========================================
+
+function formatSize(bytes) {
+
+  if (bytes === 0) {
+    return "0 Bytes";
+  }
+
+
+  const sizes = [
+    "Bytes",
+    "KB",
+    "MB",
+    "GB"
+  ];
+
+
+  const i =
+    Math.floor(
+      Math.log(bytes) /
+      Math.log(1024)
+    );
+
+
+  return (
+    Math.round(
+      bytes /
+      Math.pow(1024, i) *
+      100
+    ) / 100
+  )
+  + " "
+  + sizes[i];
+
+}
+
+
+// ========================================
+// SEGURIDAD PARA NOMBRES DE ARCHIVO
+// ========================================
+
+function escapeHTML(text) {
+
+  const div =
+    document.createElement("div");
+
+  div.textContent = text;
+
+  return div.innerHTML;
+
+}
+
+
+// ========================================
+// INICIAR
+// ========================================
+
+openDB()
+  .then(() => {
+
+    renderUnits();
+
+  })
+  .catch(error => {
+
+    console.error(
+      "Error al abrir la base de datos:",
+      error
+    );
+
+  });
