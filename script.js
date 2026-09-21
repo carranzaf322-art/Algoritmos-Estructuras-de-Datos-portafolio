@@ -22,7 +22,7 @@ const units = [
 
 
 // ========================================
-// CONFIGURACIÓN DE GITHUB
+// CONFIGURACIÓN DEL REPOSITORIO
 // ========================================
 
 const GITHUB_USER = "carranzaf322-art";
@@ -32,8 +32,14 @@ const GITHUB_REPO =
 
 const GITHUB_BRANCH = "main";
 
+const GITHUB_DOCUMENTS =
+  "documentos";
+
 const GITHUB_API =
-  `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/documentos`;
+  `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_DOCUMENTS}`;
+
+const GITHUB_WEB =
+  `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/tree/${GITHUB_BRANCH}/${GITHUB_DOCUMENTS}`;
 
 
 // ========================================
@@ -118,6 +124,20 @@ document.addEventListener("input", event => {
 
 
 // ========================================
+// CREAR RUTA DE UNA SEMANA
+// ========================================
+
+function getFolderPath(unitId, weekId) {
+
+  return (
+    `unidad-${String(unitId).padStart(2, "0")}` +
+    `/semana-${String(weekId).padStart(2, "0")}`
+  );
+
+}
+
+
+// ========================================
 // OBTENER ARCHIVOS DESDE GITHUB
 // ========================================
 
@@ -151,7 +171,14 @@ async function getFiles(folder) {
     }
 
     return data
-      .filter(item => item.type === "file")
+      .filter(item => {
+
+        return (
+          item.type === "file" &&
+          item.name !== ".gitkeep"
+        );
+
+      })
       .map(item => {
 
         return {
@@ -233,7 +260,10 @@ async function renderUnits() {
         ) {
 
           const path =
-            `unidad-${String(unit.id).padStart(2, "0")}/semana-${String(week).padStart(2, "0")}`;
+            getFolderPath(
+              unit.id,
+              week
+            );
 
           const files =
             await getFiles(path);
@@ -362,7 +392,10 @@ async function renderWeeks(unitId) {
       [1, 2, 3, 4].map(async week => {
 
         const path =
-          `unidad-${String(unitId).padStart(2, "0")}/semana-${String(week).padStart(2, "0")}`;
+          getFolderPath(
+            unitId,
+            week
+          );
 
         const files =
           await getFiles(path);
@@ -480,7 +513,10 @@ async function renderFiles(
 ) {
 
   const path =
-    `unidad-${String(unitId).padStart(2, "0")}/semana-${String(weekId).padStart(2, "0")}`;
+    getFolderPath(
+      unitId,
+      weekId
+    );
 
 
   portfolioView.innerHTML = `
@@ -621,14 +657,65 @@ async function renderFiles(
 
     </div>
 
+
+    <div class="add-file-container">
+
+      <button
+        class="btn primary"
+        id="add-file">
+
+        ＋ AGREGAR DOCUMENTO
+
+      </button>
+
+    </div>
+
   `;
 
+
+  // ======================================
+  // VOLVER A SEMANAS
+  // ======================================
 
   document
     .getElementById("back-weeks")
     .addEventListener(
       "click",
       () => renderWeeks(unitId)
+    );
+
+
+  // ======================================
+  // BOTÓN AGREGAR DOCUMENTO
+  // ======================================
+
+  document
+    .getElementById("add-file")
+    .addEventListener(
+      "click",
+      () => {
+
+        const githubFolder =
+          `${GITHUB_WEB}/${path}`;
+
+
+        const confirmar =
+          confirm(
+            "Se abrirá GitHub para agregar el documento a esta semana."
+          );
+
+
+        if (!confirmar) {
+          return;
+        }
+
+
+        window.open(
+          githubFolder,
+          "_blank"
+        );
+
+      }
     );
 
 }
@@ -639,6 +726,17 @@ async function renderFiles(
 // ========================================
 
 function openFile(url) {
+
+  if (!url) {
+
+    alert(
+      "No se encontró el enlace del documento."
+    );
+
+    return;
+
+  }
+
 
   window.open(
     url,
@@ -678,6 +776,7 @@ function getFileIcon(name) {
     jpeg: "🖼️",
     png: "🖼️",
     gif: "🖼️",
+    webp: "🖼️",
 
     mp4: "🎬",
     avi: "🎬",
@@ -688,13 +787,19 @@ function getFileIcon(name) {
 
     zip: "🗜️",
     rar: "🗜️",
+    "7z": "🗜️",
 
     txt: "📄",
 
     html: "🌐",
     css: "🎨",
     js: "⚙️",
-    php: "🐘"
+    php: "🐘",
+
+    csv: "📊",
+    json: "⚙️",
+
+    exe: "⚙️"
 
   };
 
@@ -781,7 +886,7 @@ function formatSize(bytes) {
 
 
 // ========================================
-// SEGURIDAD
+// SEGURIDAD HTML
 // ========================================
 
 function escapeHTML(text) {
@@ -797,11 +902,16 @@ function escapeHTML(text) {
 }
 
 
+// ========================================
+// SEGURIDAD DE ATRIBUTOS
+// ========================================
+
 function escapeAttribute(text) {
 
   return String(text)
     .replace(/\\/g, "\\\\")
-    .replace(/'/g, "\\'");
+    .replace(/'/g, "\\'")
+    .replace(/"/g, "&quot;");
 
 }
 
