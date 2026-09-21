@@ -21,7 +21,19 @@ const units = [
 ];
 
 
-let db;
+// ========================================
+// CONFIGURACIÓN DE GITHUB
+// ========================================
+
+const GITHUB_USER = "carranzaf322-art";
+
+const GITHUB_REPO =
+  "Algoritmos-Estructuras-de-Datos-portafolio";
+
+const GITHUB_BRANCH = "main";
+
+const GITHUB_API =
+  `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/documentos`;
 
 
 // ========================================
@@ -59,13 +71,11 @@ document.addEventListener("click", event => {
   const page =
     target.dataset.page;
 
-
   if (page === "portfolio") {
 
     renderUnits();
 
   }
-
 
   showPage(page);
 
@@ -82,12 +92,10 @@ document.addEventListener("input", event => {
     return;
   }
 
-
   const search =
     event.target.value
       .toLowerCase()
       .trim();
-
 
   document
     .querySelectorAll(".file")
@@ -99,20 +107,89 @@ document.addEventListener("input", event => {
           ?.textContent
           .toLowerCase() || "";
 
-
-      if (name.includes(search)) {
-
-        file.style.display = "";
-
-      } else {
-
-        file.style.display = "none";
-
-      }
+      file.style.display =
+        name.includes(search)
+          ? ""
+          : "none";
 
     });
 
 });
+
+
+// ========================================
+// OBTENER ARCHIVOS DESDE GITHUB
+// ========================================
+
+async function getFiles(folder) {
+
+  const url =
+    `${GITHUB_API}/${folder}`;
+
+  try {
+
+    const response =
+      await fetch(url);
+
+    if (!response.ok) {
+
+      if (response.status === 404) {
+        return [];
+      }
+
+      throw new Error(
+        `Error HTTP ${response.status}`
+      );
+
+    }
+
+    const data =
+      await response.json();
+
+    if (!Array.isArray(data)) {
+      return [];
+    }
+
+    return data
+      .filter(item => item.type === "file")
+      .map(item => {
+
+        return {
+
+          name: item.name,
+
+          size: item.size || 0,
+
+          type:
+            getFileType(item.name),
+
+          url:
+            item.html_url,
+
+          download_url:
+            item.download_url,
+
+          path:
+            item.path
+
+        };
+
+      });
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Error obteniendo archivos:",
+      error
+    );
+
+    return [];
+
+  }
+
+}
 
 
 // ========================================
@@ -121,13 +198,33 @@ document.addEventListener("input", event => {
 
 async function renderUnits() {
 
+  portfolioView.innerHTML = `
+
+    <div class="explorer-header">
+
+      <p class="eyebrow">
+        EXPLORADOR ACADÉMICO
+      </p>
+
+      <h1>
+        PORTAFOLIO
+      </h1>
+
+      <p>
+        Cargando unidades...
+      </p>
+
+    </div>
+
+  `;
+
+
   const unitCards =
     await Promise.all(
 
       units.map(async unit => {
 
         let total = 0;
-
 
         for (
           let week = 1;
@@ -138,10 +235,8 @@ async function renderUnits() {
           const path =
             `unidad-${String(unit.id).padStart(2, "0")}/semana-${String(week).padStart(2, "0")}`;
 
-
           const files =
             await getFiles(path);
-
 
           total += files.length;
 
@@ -240,6 +335,27 @@ async function renderWeeks(unitId) {
     );
 
 
+  portfolioView.innerHTML = `
+
+    <div class="explorer-header">
+
+      <p class="eyebrow">
+        EXPLORADOR / ${unit.name}
+      </p>
+
+      <h1>
+        SEMANAS
+      </h1>
+
+      <p>
+        Cargando semanas...
+      </p>
+
+    </div>
+
+  `;
+
+
   const weekCards =
     await Promise.all(
 
@@ -247,7 +363,6 @@ async function renderWeeks(unitId) {
 
         const path =
           `unidad-${String(unitId).padStart(2, "0")}/semana-${String(week).padStart(2, "0")}`;
-
 
         const files =
           await getFiles(path);
@@ -356,207 +471,6 @@ async function renderWeeks(unitId) {
 
 
 // ========================================
-// BASE DE DATOS LOCAL
-// ========================================
-
-function openDB() {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const request =
-        indexedDB.open(
-          "PortafolioBaseDatosII",
-          1
-        );
-
-
-      request.onupgradeneeded =
-        event => {
-
-          db =
-            event.target.result;
-
-
-          if (
-            !db.objectStoreNames.contains("files")
-          ) {
-
-            const store =
-              db.createObjectStore(
-                "files",
-                {
-                  keyPath: "id",
-                  autoIncrement: true
-                }
-              );
-
-
-            store.createIndex(
-              "folder",
-              "folder",
-              {
-                unique: false
-              }
-            );
-
-          }
-
-        };
-
-
-      request.onsuccess =
-        event => {
-
-          db =
-            event.target.result;
-
-          resolve(db);
-
-        };
-
-
-      request.onerror =
-        event => {
-
-          reject(
-            event.target.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ========================================
-// OBTENER ARCHIVOS
-// ========================================
-
-function getFiles(folder) {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const transaction =
-        db.transaction(
-          ["files"],
-          "readonly"
-        );
-
-
-      const store =
-        transaction.objectStore(
-          "files"
-        );
-
-
-      const index =
-        store.index("folder");
-
-
-      const request =
-        index.getAll(folder);
-
-
-      request.onsuccess =
-        () => {
-
-          resolve(
-            request.result
-          );
-
-        };
-
-
-      request.onerror =
-        () => {
-
-          reject(
-            request.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ========================================
-// GUARDAR ARCHIVOS
-// ========================================
-
-function saveFiles(folder, fileList) {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const transaction =
-        db.transaction(
-          ["files"],
-          "readwrite"
-        );
-
-
-      const store =
-        transaction.objectStore(
-          "files"
-        );
-
-
-      for (
-        const file of fileList
-      ) {
-
-        store.add({
-
-          folder: folder,
-
-          name: file.name,
-
-          type:
-            file.type || "Archivo",
-
-          size: file.size,
-
-          file: file,
-
-          date:
-            new Date().toLocaleString()
-
-        });
-
-      }
-
-
-      transaction.oncomplete =
-        () => {
-
-          resolve();
-
-        };
-
-
-      transaction.onerror =
-        event => {
-
-          reject(
-            event.target.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-// ========================================
 // MOSTRAR ARCHIVOS
 // ========================================
 
@@ -567,6 +481,27 @@ async function renderFiles(
 
   const path =
     `unidad-${String(unitId).padStart(2, "0")}/semana-${String(weekId).padStart(2, "0")}`;
+
+
+  portfolioView.innerHTML = `
+
+    <div class="explorer-header">
+
+      <p class="eyebrow">
+        ${path}
+      </p>
+
+      <h1>
+        SEMANA ${weekId}
+      </h1>
+
+      <p>
+        Cargando archivos...
+      </p>
+
+    </div>
+
+  `;
 
 
   const files =
@@ -629,8 +564,7 @@ async function renderFiles(
             </p>
 
             <small>
-              Agrega tus archivos usando
-              el botón de abajo.
+              Todavía no hay documentos en esta semana.
             </small>
 
           </div>
@@ -662,10 +596,6 @@ async function renderFiles(
 
                 ${formatSize(file.size)}
 
-                ·
-
-                ${file.date || "Sin fecha"}
-
               </small>
 
             </div>
@@ -675,22 +605,9 @@ async function renderFiles(
 
               <button
                 class="file-btn"
-                onclick="openFile(${file.id})">
+                onclick="openFile('${escapeAttribute(file.url)}')">
 
                 👁 VER
-
-              </button>
-
-
-              <button
-                class="file-btn delete"
-                onclick="deleteFile(
-                  ${file.id},
-                  ${unitId},
-                  ${weekId}
-                )">
-
-                🗑 ELIMINAR
 
               </button>
 
@@ -704,26 +621,6 @@ async function renderFiles(
 
     </div>
 
-
-    <div class="add-file-container">
-
-      <button
-        class="btn primary"
-        id="add-file">
-
-        ＋ AGREGAR ARCHIVO
-
-      </button>
-
-    </div>
-
-
-    <input
-      type="file"
-      id="file-picker"
-      multiple
-      hidden>
-
   `;
 
 
@@ -734,71 +631,6 @@ async function renderFiles(
       () => renderWeeks(unitId)
     );
 
-
-  document
-    .getElementById("add-file")
-    .addEventListener(
-      "click",
-      () => {
-
-        document
-          .getElementById("file-picker")
-          .click();
-
-      }
-    );
-
-
-  document
-    .getElementById("file-picker")
-    .addEventListener(
-      "change",
-      async function () {
-
-        const archivos =
-          this.files;
-
-
-        if (
-          archivos.length === 0
-        ) {
-
-          return;
-
-        }
-
-
-        try {
-
-          await saveFiles(
-            path,
-            archivos
-          );
-
-
-          this.value = "";
-
-
-          await renderFiles(
-            unitId,
-            weekId
-          );
-
-        }
-
-        catch (error) {
-
-          console.error(error);
-
-          alert(
-            "No se pudieron guardar los archivos."
-          );
-
-        }
-
-      }
-    );
-
 }
 
 
@@ -806,138 +638,12 @@ async function renderFiles(
 // ABRIR ARCHIVO
 // ========================================
 
-function openFile(id) {
+function openFile(url) {
 
-  const transaction =
-    db.transaction(
-      ["files"],
-      "readonly"
-    );
-
-
-  const store =
-    transaction.objectStore(
-      "files"
-    );
-
-
-  const request =
-    store.get(id);
-
-
-  request.onsuccess =
-    () => {
-
-      const data =
-        request.result;
-
-
-      if (!data) {
-
-        alert(
-          "No se encontró el archivo."
-        );
-
-        return;
-
-      }
-
-
-      const url =
-        URL.createObjectURL(
-          data.file
-        );
-
-
-      const nuevaVentana =
-        window.open(
-          url,
-          "_blank"
-        );
-
-
-      if (!nuevaVentana) {
-
-        alert(
-          "El navegador bloqueó la ventana. " +
-          "Permite ventanas emergentes para este sitio."
-        );
-
-      }
-
-
-      setTimeout(
-        () => {
-
-          URL.revokeObjectURL(url);
-
-        },
-        60000
-      );
-
-    };
-
-}
-
-
-// ========================================
-// ELIMINAR ARCHIVO
-// ========================================
-
-function deleteFile(
-  id,
-  unitId,
-  weekId
-) {
-
-  const confirmar =
-    confirm(
-      "¿Quieres eliminar este archivo?"
-    );
-
-
-  if (!confirmar) {
-
-    return;
-
-  }
-
-
-  const transaction =
-    db.transaction(
-      ["files"],
-      "readwrite"
-    );
-
-
-  const store =
-    transaction.objectStore(
-      "files"
-    );
-
-
-  store.delete(id);
-
-
-  transaction.oncomplete =
-    () => {
-
-      renderFiles(
-        unitId,
-        weekId
-      );
-
-    };
-
-
-  transaction.onerror =
-    () => {
-
-      alert(
-        "No se pudo eliminar el archivo."
-      );
-
-    };
+  window.open(
+    url,
+    "_blank"
+  );
 
 }
 
@@ -1035,7 +741,7 @@ function getFileType(name) {
 
 function formatSize(bytes) {
 
-  if (bytes === 0) {
+  if (!bytes) {
 
     return "0 Bytes";
 
@@ -1083,12 +789,19 @@ function escapeHTML(text) {
   const div =
     document.createElement("div");
 
-
   div.textContent =
     text;
 
-
   return div.innerHTML;
+
+}
+
+
+function escapeAttribute(text) {
+
+  return String(text)
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'");
 
 }
 
@@ -1097,17 +810,4 @@ function escapeHTML(text) {
 // INICIAR
 // ========================================
 
-openDB()
-  .then(() => {
-
-    renderUnits();
-
-  })
-  .catch(error => {
-
-    console.error(
-      "Error al abrir la base de datos:",
-      error
-    );
-
-  });
+renderUnits();
