@@ -1785,3 +1785,42 @@ body {
     }
 
 }
+/* ========================================
+   BUSCADOR DE ARCHIVOS
+======================================== */
+
+.search-container {
+    width: min(900px, 92%);
+    margin: 20px auto;
+}
+
+#file-search {
+    width: 100%;
+    padding: 14px 18px;
+    box-sizing: border-box;
+
+    border: 1px solid var(--line);
+    border-radius: 8px;
+
+    background: rgba(10, 8, 7, 0.95);
+
+    color: var(--text);
+
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+
+    outline: none;
+
+    transition: 0.2s ease;
+}
+
+#file-search::placeholder {
+    color: var(--muted);
+}
+
+#file-search:focus {
+    border-color: var(--gold);
+
+    box-shadow:
+        0 0 12px rgba(215, 168, 75, 0.25);
+}
