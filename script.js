@@ -15,105 +15,164 @@ const GITHUB_BRANCH = "main";
 const GITHUB_API =
     `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/documentos`;
 
-const GITHUB_WEB =
-    `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/tree/${GITHUB_BRANCH}/documentos`;
 
-
-// ===============================
+// =====================================================
 // NAVEGACIÓN
-// ===============================
+// =====================================================
 
 function showPage(id) {
 
     pages.forEach(page => {
-        page.classList.toggle("active", page.id === id);
+
+        page.classList.toggle(
+            "active",
+            page.id === id
+        );
+
     });
 
-    window.scrollTo(0, 0);
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 }
 
 
 document.addEventListener("click", event => {
 
-    const target = event.target.closest("[data-page]");
+    const target =
+        event.target.closest("[data-page]");
 
     if (!target) return;
 
-    const page = target.dataset.page;
+    const page =
+        target.dataset.page;
 
     showPage(page);
 
     if (page === "portfolio") {
+
         openExplorer();
+
     }
+
 });
 
 
-// ===============================
+// =====================================================
 // BUSCADOR
-// ===============================
+// =====================================================
 
 document.addEventListener("input", event => {
 
-    if (event.target.id !== "file-search") return;
+    if (event.target.id !== "file-search") {
+        return;
+    }
 
-    const text = event.target.value.toLowerCase().trim();
+    const text =
+        event.target.value
+            .toLowerCase()
+            .trim();
 
-    document.querySelectorAll(".file").forEach(file => {
 
-        const name =
-            file.querySelector(".file-name")?.textContent.toLowerCase() || "";
+    document
+        .querySelectorAll(".file")
+        .forEach(file => {
 
-        file.style.display =
-            name.includes(text) ? "" : "none";
-    });
+            const name =
+                file
+                    .querySelector(".file-name")
+                    ?.textContent
+                    .toLowerCase() || "";
+
+
+            file.style.display =
+                name.includes(text)
+                    ? ""
+                    : "none";
+
+        });
+
 });
 
 
-// ===============================
-// RUTA
-// ===============================
+// =====================================================
+// CREAR RUTA
+// =====================================================
 
 function getFolderPath(unit, week) {
 
-    return `unidad-${String(unit).padStart(2, "0")}/semana-${String(week).padStart(2, "0")}`;
+    return (
+        `unidad-${String(unit).padStart(2, "0")}` +
+        `/semana-${String(week).padStart(2, "0")}`
+    );
+
 }
 
 
-// ===============================
-// LEER GITHUB
-// ===============================
+// =====================================================
+// LEER ARCHIVOS DESDE GITHUB
+// =====================================================
 
 async function getFiles(path) {
 
     try {
 
         const response =
-            await fetch(`${GITHUB_API}/${path}?t=${Date.now()}`);
+            await fetch(
+                `${GITHUB_API}/${path}?t=${Date.now()}`
+            );
 
-        if (!response.ok) return [];
 
-        const data = await response.json();
+        if (!response.ok) {
 
-        if (!Array.isArray(data)) return [];
+            console.error(
+                "Error GitHub:",
+                response.status
+            );
 
-        return data.filter(file =>
-            file.type === "file" &&
-            file.name !== ".gitkeep"
+            return [];
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (!Array.isArray(data)) {
+            return [];
+        }
+
+
+        return data.filter(file => {
+
+            return (
+                file.type === "file" &&
+                file.name !== ".gitkeep"
+            );
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Error obteniendo archivos:",
+            error
         );
 
-    } catch (error) {
-
-        console.error(error);
-
         return [];
+
     }
+
 }
 
 
-// ===============================
+// =====================================================
 // EXPLORADOR PRINCIPAL
-// ===============================
+// =====================================================
 
 function openExplorer() {
 
@@ -134,6 +193,7 @@ function openExplorer() {
             </p>
 
         </div>
+
 
         <div class="folder-grid">
 
@@ -160,31 +220,42 @@ function openExplorer() {
             `).join("")}
 
         </div>
+
     `;
 
 
-    document.querySelectorAll("[data-unit]").forEach(folder => {
+    document
+        .querySelectorAll("[data-unit]")
+        .forEach(folder => {
 
-        folder.addEventListener("click", () => {
+            folder.addEventListener(
+                "click",
+                () => {
 
-            openWeeks(
-                Number(folder.dataset.unit)
+                    openWeeks(
+                        Number(
+                            folder.dataset.unit
+                        )
+                    );
+
+                }
             );
 
         });
 
-    });
 }
 
 
-// ===============================
-// SEMANAS
-// ===============================
+// =====================================================
+// MOSTRAR SEMANAS
+// =====================================================
 
 async function openWeeks(unitId) {
 
     const unit =
-        units.find(u => u.id === unitId);
+        units.find(
+            item => item.id === unitId
+        );
 
 
     portfolioView.innerHTML = `
@@ -205,6 +276,7 @@ async function openWeeks(unitId) {
 
         </div>
 
+
         <div class="explorer-header">
 
             <p class="eyebrow">
@@ -215,11 +287,16 @@ async function openWeeks(unitId) {
                 SEMANAS
             </h1>
 
+            <p>
+                Selecciona una semana.
+            </p>
+
         </div>
+
 
         <div class="week-grid">
 
-            ${[1,2,3,4].map(week => `
+            ${[1, 2, 3, 4].map(week => `
 
                 <article
                     class="week"
@@ -242,6 +319,7 @@ async function openWeeks(unitId) {
             `).join("")}
 
         </div>
+
     `;
 
 
@@ -253,29 +331,43 @@ async function openWeeks(unitId) {
         );
 
 
-    document.querySelectorAll("[data-week]").forEach(card => {
+    document
+        .querySelectorAll("[data-week]")
+        .forEach(card => {
 
-        card.addEventListener("click", () => {
+            card.addEventListener(
+                "click",
+                () => {
 
-            openFiles(
-                unitId,
-                Number(card.dataset.week)
+                    openFiles(
+                        unitId,
+                        Number(
+                            card.dataset.week
+                        )
+                    );
+
+                }
             );
 
         });
 
-    });
 }
 
 
-// ===============================
-// ARCHIVOS
-// ===============================
+// =====================================================
+// MOSTRAR ARCHIVOS
+// =====================================================
 
-async function openFiles(unitId, weekId) {
+async function openFiles(
+    unitId,
+    weekId
+) {
 
     const path =
-        getFolderPath(unitId, weekId);
+        getFolderPath(
+            unitId,
+            weekId
+        );
 
 
     portfolioView.innerHTML = `
@@ -296,6 +388,7 @@ async function openFiles(unitId, weekId) {
 
         </div>
 
+
         <div class="explorer-header">
 
             <p class="eyebrow">
@@ -311,6 +404,7 @@ async function openFiles(unitId, weekId) {
             </p>
 
         </div>
+
     `;
 
 
@@ -348,13 +442,16 @@ async function openFiles(unitId, weekId) {
             </h1>
 
             <p>
-                ${files.length} documento${files.length === 1 ? "" : "s"}
+                ${files.length}
+                documento${files.length === 1 ? "" : "s"}
             </p>
 
         </div>
 
 
-        <div class="file-list">
+        <div
+            class="file-list"
+            id="file-list">
 
             ${
                 files.length === 0
@@ -362,17 +459,19 @@ async function openFiles(unitId, weekId) {
                 ?
 
                 `
-                    <div class="empty">
 
-                        <p>
-                            📂 CARPETA VACÍA
-                        </p>
+                <div class="empty">
 
-                        <small>
-                            No hay documentos todavía.
-                        </small>
+                    <p>
+                        📂 CARPETA VACÍA
+                    </p>
 
-                    </div>
+                    <small>
+                        No hay documentos todavía.
+                    </small>
+
+                </div>
+
                 `
 
                 :
@@ -385,19 +484,26 @@ async function openFiles(unitId, weekId) {
                             ${getFileIcon(file.name)}
                         </div>
 
+
                         <div class="file-info">
 
                             <strong class="file-name">
                                 ${escapeHTML(file.name)}
                             </strong>
 
+
                             <small>
+
                                 ${getFileType(file.name)}
+
                                 ·
+
                                 ${formatSize(file.size)}
+
                             </small>
 
                         </div>
+
 
                         <div class="file-actions">
 
@@ -419,7 +525,18 @@ async function openFiles(unitId, weekId) {
         </div>
 
 
+        <!-- =====================================
+             AGREGAR DOCUMENTO
+        ====================================== -->
+
         <div class="add-file-container">
+
+            <input
+                type="file"
+                id="pc-file"
+                style="display:none;"
+            >
+
 
             <button
                 class="btn primary"
@@ -430,16 +547,29 @@ async function openFiles(unitId, weekId) {
             </button>
 
         </div>
+
     `;
 
+
+    // =================================================
+    // VOLVER A SEMANAS
+    // =================================================
 
     document
         .getElementById("back-weeks")
         .addEventListener(
             "click",
-            () => openWeeks(unitId)
+            () => {
+
+                openWeeks(unitId);
+
+            }
         );
 
+
+    // =================================================
+    // ABRIR EXPLORADOR DE WINDOWS
+    // =================================================
 
     document
         .getElementById("add-file")
@@ -447,42 +577,97 @@ async function openFiles(unitId, weekId) {
             "click",
             () => {
 
-                const folder =
-                    `${GITHUB_WEB}/${path}`;
+                const fileInput =
+                    document.getElementById("pc-file");
 
-                window.open(
-                    folder,
-                    "_blank"
+
+                fileInput.value = "";
+
+
+                fileInput.click();
+
+            }
+        );
+
+
+    // =================================================
+    // ARCHIVO SELECCIONADO
+    // =================================================
+
+    document
+        .getElementById("pc-file")
+        .addEventListener(
+            "change",
+            event => {
+
+                const file =
+                    event.target.files[0];
+
+
+                if (!file) {
+                    return;
+                }
+
+
+                alert(
+                    "Archivo seleccionado:\n\n" +
+                    file.name +
+                    "\n\n" +
+                    "Tamaño: " +
+                    formatSize(file.size) +
+                    "\n\n" +
+                    "Ahora el archivo está seleccionado desde tu PC."
+                );
+
+
+                console.log(
+                    "Archivo seleccionado:",
+                    file
                 );
 
             }
         );
+
 }
 
 
-// ===============================
+// =====================================================
 // ABRIR DOCUMENTO
-// ===============================
+// =====================================================
 
 function openFile(url) {
 
-    if (!url) return;
+    if (!url) {
+
+        alert(
+            "No se encontró el enlace del documento."
+        );
+
+        return;
+
+    }
+
 
     window.open(
         url,
         "_blank"
     );
+
 }
 
 
-// ===============================
-// ICONOS
-// ===============================
+// =====================================================
+// ICONO
+// =====================================================
 
 function getFileIcon(name) {
 
     const ext =
-        name.split(".").pop().toLowerCase();
+        name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
 
     const icons = {
 
@@ -501,95 +686,157 @@ function getFileIcon(name) {
         jpeg: "🖼️",
         png: "🖼️",
         gif: "🖼️",
+        webp: "🖼️",
 
         zip: "🗜️",
         rar: "🗜️",
+        "7z": "🗜️",
 
         mp4: "🎬",
+        avi: "🎬",
+        mov: "🎬",
 
         mp3: "🎵",
+        wav: "🎵",
 
         txt: "📄",
 
-        csv: "📊",
+        html: "🌐",
+        css: "🎨",
+        js: "⚙️",
+        php: "🐘",
 
+        csv: "📊",
         json: "⚙️"
 
     };
 
-    return icons[ext] || "📄";
+
+    return (
+        icons[ext] ||
+        "📄"
+    );
+
 }
 
 
-// ===============================
-// TIPO
-// ===============================
+// =====================================================
+// TIPO DE ARCHIVO
+// =====================================================
 
 function getFileType(name) {
 
-    const parts = name.split(".");
+    const parts =
+        name.split(".");
+
 
     if (parts.length < 2) {
+
         return "ARCHIVO";
+
     }
 
-    return parts.pop().toUpperCase();
+
+    return (
+        parts
+            .pop()
+            .toUpperCase()
+    );
+
 }
 
 
-// ===============================
+// =====================================================
 // TAMAÑO
-// ===============================
+// =====================================================
 
 function formatSize(bytes) {
 
-    if (!bytes) return "0 Bytes";
+    if (!bytes) {
 
-    const sizes =
-        ["Bytes", "KB", "MB", "GB"];
+        return "0 Bytes";
+
+    }
+
+
+    const sizes = [
+        "Bytes",
+        "KB",
+        "MB",
+        "GB"
+    ];
+
 
     const i =
         Math.floor(
-            Math.log(bytes) / Math.log(1024)
+            Math.log(bytes) /
+            Math.log(1024)
         );
 
+
     return (
+
         Math.round(
+
             bytes /
             Math.pow(1024, i) *
             100
+
         ) / 100
-    ) + " " + sizes[i];
+
+    )
+    + " "
+    + sizes[i];
+
 }
 
 
-// ===============================
-// SEGURIDAD
-// ===============================
+// =====================================================
+// SEGURIDAD HTML
+// =====================================================
 
 function escapeHTML(text) {
 
     const div =
         document.createElement("div");
 
-    div.textContent = text;
+
+    div.textContent =
+        text;
+
 
     return div.innerHTML;
+
 }
 
+
+// =====================================================
+// SEGURIDAD ATRIBUTO
+// =====================================================
 
 function escapeAttribute(text) {
 
     return String(text)
-        .replace(/\\/g, "\\\\")
-        .replace(/'/g, "\\'");
+
+        .replace(
+            /\\/g,
+            "\\\\"
+        )
+
+        .replace(
+            /'/g,
+            "\\'"
+        );
+
 }
 
 
-// ===============================
-// INICIO
-// ===============================
+// =====================================================
+// INICIAR
+// =====================================================
 
 if (portfolioView) {
+
     openExplorer();
+
 }
