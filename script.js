@@ -2,42 +2,115 @@ const pages = document.querySelectorAll(".page");
 const portfolioView = document.getElementById("portfolio-view");
 
 const units = [
-  { id: 1, name: "UNIDAD 01" },
-  { id: 2, name: "UNIDAD 02" },
-  { id: 3, name: "UNIDAD 03" },
-  { id: 4, name: "UNIDAD 04" }
+  {
+    id: 1,
+    name: "UNIDAD 01"
+  },
+  {
+    id: 2,
+    name: "UNIDAD 02"
+  },
+  {
+    id: 3,
+    name: "UNIDAD 03"
+  },
+  {
+    id: 4,
+    name: "UNIDAD 04"
+  }
 ];
 
 
+let db;
+
+
 // ========================================
-// NAVEGACIÓN ENTRE PÁGINAS
+// NAVEGACIÓN
 // ========================================
 
 function showPage(id) {
+
   pages.forEach(page => {
-    page.classList.toggle("active", page.id === id);
+
+    page.classList.toggle(
+      "active",
+      page.id === id
+    );
+
   });
 
   window.scrollTo({
     top: 0,
     behavior: "smooth"
   });
+
 }
 
 
 document.addEventListener("click", event => {
 
-  const target = event.target.closest("[data-page]");
+  const target =
+    event.target.closest("[data-page]");
 
-  if (!target) return;
-
-  const page = target.dataset.page;
-
-  if (page === "portfolio") {
-    renderUnits();
+  if (!target) {
+    return;
   }
 
+  const page =
+    target.dataset.page;
+
+
+  if (page === "portfolio") {
+
+    renderUnits();
+
+  }
+
+
   showPage(page);
+
+});
+
+
+// ========================================
+// BUSCADOR
+// ========================================
+
+document.addEventListener("input", event => {
+
+  if (event.target.id !== "file-search") {
+    return;
+  }
+
+
+  const search =
+    event.target.value
+      .toLowerCase()
+      .trim();
+
+
+  document
+    .querySelectorAll(".file")
+    .forEach(file => {
+
+      const name =
+        file
+          .querySelector(".file-name")
+          ?.textContent
+          .toLowerCase() || "";
+
+
+      if (name.includes(search)) {
+
+        file.style.display = "";
+
+      } else {
+
+        file.style.display = "none";
+
+      }
+
+    });
 
 });
 
@@ -46,7 +119,66 @@ document.addEventListener("click", event => {
 // MOSTRAR UNIDADES
 // ========================================
 
-function renderUnits() {
+async function renderUnits() {
+
+  const unitCards =
+    await Promise.all(
+
+      units.map(async unit => {
+
+        let total = 0;
+
+
+        for (
+          let week = 1;
+          week <= 4;
+          week++
+        ) {
+
+          const path =
+            `unidad-${String(unit.id).padStart(2, "0")}/semana-${String(week).padStart(2, "0")}`;
+
+
+          const files =
+            await getFiles(path);
+
+
+          total += files.length;
+
+        }
+
+
+        return `
+
+          <article
+            class="folder"
+            data-unit="${unit.id}">
+
+            <div class="folder-icon">
+              ⚔️
+            </div>
+
+            <h2>
+              ${unit.name}
+            </h2>
+
+            <p>
+              4 semanas
+            </p>
+
+            <p>
+              📦 ${total}
+              archivo${total === 1 ? "" : "s"}
+            </p>
+
+          </article>
+
+        `;
+
+      })
+
+    );
+
 
   portfolioView.innerHTML = `
 
@@ -69,44 +201,29 @@ function renderUnits() {
 
     <div class="folder-grid">
 
-      ${units.map(unit => `
-
-        <article
-          class="folder"
-          data-unit="${unit.id}">
-
-          <div class="folder-icon">
-            📁
-          </div>
-
-          <h2>
-            ${unit.name}
-          </h2>
-
-          <p>
-            Semanas 1 — 4
-          </p>
-
-        </article>
-
-      `).join("")}
+      ${unitCards.join("")}
 
     </div>
 
   `;
 
 
-  document.querySelectorAll("[data-unit]").forEach(folder => {
+  document
+    .querySelectorAll("[data-unit]")
+    .forEach(folder => {
 
-    folder.addEventListener("click", () => {
+      folder.addEventListener(
+        "click",
+        () => {
 
-      renderWeeks(
-        Number(folder.dataset.unit)
+          renderWeeks(
+            Number(folder.dataset.unit)
+          );
+
+        }
       );
 
     });
-
-  });
 
 }
 
@@ -115,11 +232,53 @@ function renderUnits() {
 // MOSTRAR SEMANAS
 // ========================================
 
-function renderWeeks(unitId) {
+async function renderWeeks(unitId) {
 
-  const unit = units.find(
-    item => item.id === unitId
-  );
+  const unit =
+    units.find(
+      item => item.id === unitId
+    );
+
+
+  const weekCards =
+    await Promise.all(
+
+      [1, 2, 3, 4].map(async week => {
+
+        const path =
+          `unidad-${String(unitId).padStart(2, "0")}/semana-${String(week).padStart(2, "0")}`;
+
+
+        const files =
+          await getFiles(path);
+
+
+        return `
+
+          <article
+            class="week"
+            data-week="${week}">
+
+            <div class="week-icon">
+              📜
+            </div>
+
+            <h2>
+              SEMANA ${week}
+            </h2>
+
+            <p>
+              ${files.length}
+              archivo${files.length === 1 ? "" : "s"}
+            </p>
+
+          </article>
+
+        `;
+
+      })
+
+    );
 
 
   portfolioView.innerHTML = `
@@ -160,27 +319,7 @@ function renderWeeks(unitId) {
 
     <div class="week-grid">
 
-      ${[1, 2, 3, 4].map(week => `
-
-        <article
-          class="week"
-          data-week="${week}">
-
-          <div class="week-icon">
-            📂
-          </div>
-
-          <h2>
-            SEMANA ${week}
-          </h2>
-
-          <p>
-            Explorar archivos
-          </p>
-
-        </article>
-
-      `).join("")}
+      ${weekCards.join("")}
 
     </div>
 
@@ -189,21 +328,27 @@ function renderWeeks(unitId) {
 
   document
     .getElementById("back-units")
-    .addEventListener("click", renderUnits);
+    .addEventListener(
+      "click",
+      renderUnits
+    );
 
 
   document
     .querySelectorAll("[data-week]")
     .forEach(card => {
 
-      card.addEventListener("click", () => {
+      card.addEventListener(
+        "click",
+        () => {
 
-        renderFiles(
-          unitId,
-          Number(card.dataset.week)
-        );
+          renderFiles(
+            unitId,
+            Number(card.dataset.week)
+          );
 
-      });
+        }
+      );
 
     });
 
@@ -214,110 +359,129 @@ function renderWeeks(unitId) {
 // BASE DE DATOS LOCAL
 // ========================================
 
-let db;
-
-
-// Abrir IndexedDB
 function openDB() {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    const request = indexedDB.open(
-      "PortafolioBaseDatosII",
-      1
-    );
-
-
-    request.onupgradeneeded = event => {
-
-      db = event.target.result;
-
-
-      if (!db.objectStoreNames.contains("files")) {
-
-        const store = db.createObjectStore(
-          "files",
-          {
-            keyPath: "id",
-            autoIncrement: true
-          }
+      const request =
+        indexedDB.open(
+          "PortafolioBaseDatosII",
+          1
         );
 
 
-        store.createIndex(
-          "folder",
-          "folder",
-          {
-            unique: false
+      request.onupgradeneeded =
+        event => {
+
+          db =
+            event.target.result;
+
+
+          if (
+            !db.objectStoreNames.contains("files")
+          ) {
+
+            const store =
+              db.createObjectStore(
+                "files",
+                {
+                  keyPath: "id",
+                  autoIncrement: true
+                }
+              );
+
+
+            store.createIndex(
+              "folder",
+              "folder",
+              {
+                unique: false
+              }
+            );
+
           }
-        );
 
-      }
-
-    };
+        };
 
 
-    request.onsuccess = event => {
+      request.onsuccess =
+        event => {
 
-      db = event.target.result;
+          db =
+            event.target.result;
 
-      resolve(db);
+          resolve(db);
 
-    };
+        };
 
 
-    request.onerror = event => {
+      request.onerror =
+        event => {
 
-      reject(event.target.error);
+          reject(
+            event.target.error
+          );
 
-    };
+        };
 
-  });
+    }
+  );
 
 }
 
 
 // ========================================
-// OBTENER ARCHIVOS DE UNA SEMANA
+// OBTENER ARCHIVOS
 // ========================================
 
 function getFiles(folder) {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    const transaction =
-      db.transaction(
-        ["files"],
-        "readonly"
-      );
-
-
-    const store =
-      transaction.objectStore("files");
+      const transaction =
+        db.transaction(
+          ["files"],
+          "readonly"
+        );
 
 
-    const index =
-      store.index("folder");
+      const store =
+        transaction.objectStore(
+          "files"
+        );
 
 
-    const request =
-      index.getAll(folder);
+      const index =
+        store.index("folder");
 
 
-    request.onsuccess = () => {
-
-      resolve(request.result);
-
-    };
+      const request =
+        index.getAll(folder);
 
 
-    request.onerror = () => {
+      request.onsuccess =
+        () => {
 
-      reject(request.error);
+          resolve(
+            request.result
+          );
 
-    };
+        };
 
-  });
+
+      request.onerror =
+        () => {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
 
 }
 
@@ -328,54 +492,66 @@ function getFiles(folder) {
 
 function saveFiles(folder, fileList) {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    const transaction =
-      db.transaction(
-        ["files"],
-        "readwrite"
-      );
-
-
-    const store =
-      transaction.objectStore("files");
+      const transaction =
+        db.transaction(
+          ["files"],
+          "readwrite"
+        );
 
 
-    for (const file of fileList) {
+      const store =
+        transaction.objectStore(
+          "files"
+        );
 
-      store.add({
 
-        folder: folder,
+      for (
+        const file of fileList
+      ) {
 
-        name: file.name,
+        store.add({
 
-        type: file.type,
+          folder: folder,
 
-        size: file.size,
+          name: file.name,
 
-        file: file,
+          type:
+            file.type || "Archivo",
 
-        date: new Date().toLocaleString()
+          size: file.size,
 
-      });
+          file: file,
+
+          date:
+            new Date().toLocaleString()
+
+        });
+
+      }
+
+
+      transaction.oncomplete =
+        () => {
+
+          resolve();
+
+        };
+
+
+      transaction.onerror =
+        event => {
+
+          reject(
+            event.target.error
+          );
+
+        };
 
     }
-
-
-    transaction.oncomplete = () => {
-
-      resolve();
-
-    };
-
-
-    transaction.onerror = event => {
-
-      reject(event.target.error);
-
-    };
-
-  });
+  );
 
 }
 
@@ -384,7 +560,10 @@ function saveFiles(folder, fileList) {
 // MOSTRAR ARCHIVOS
 // ========================================
 
-async function renderFiles(unitId, weekId) {
+async function renderFiles(
+  unitId,
+  weekId
+) {
 
   const path =
     `unidad-${String(unitId).padStart(2, "0")}/semana-${String(weekId).padStart(2, "0")}`;
@@ -424,13 +603,13 @@ async function renderFiles(unitId, weekId) {
       </h1>
 
       <p>
-        Archivos de esta semana.
+        ${files.length}
+        archivo${files.length === 1 ? "" : "s"}
+        en esta semana.
       </p>
 
     </div>
 
-
-    <!-- LISTA DE ARCHIVOS -->
 
     <div
       class="file-list"
@@ -442,39 +621,51 @@ async function renderFiles(unitId, weekId) {
         ?
 
         `
-        <div class="empty">
 
-          <p>
-            Esta carpeta está vacía.
-          </p>
+          <div class="empty">
 
-          <small>
-            Agrega tus archivos usando el botón de abajo.
-          </small>
+            <p>
+              📦 INVENTARIO VACÍO
+            </p>
 
-        </div>
+            <small>
+              Agrega tus archivos usando
+              el botón de abajo.
+            </small>
+
+          </div>
+
         `
 
         :
 
         files.map(file => `
 
-          <div
-            class="file-item">
+          <div class="file">
 
             <div class="file-icon">
-              📄
+              ${getFileIcon(file.name)}
             </div>
 
 
             <div class="file-info">
 
-              <strong>
-                ${file.name}
+              <strong class="file-name">
+                ${escapeHTML(file.name)}
               </strong>
 
               <small>
+
+                ${getFileType(file.name)}
+
+                ·
+
                 ${formatSize(file.size)}
+
+                ·
+
+                ${file.date || "Sin fecha"}
+
               </small>
 
             </div>
@@ -493,7 +684,11 @@ async function renderFiles(unitId, weekId) {
 
               <button
                 class="file-btn delete"
-                onclick="deleteFile(${file.id}, ${unitId}, ${weekId})">
+                onclick="deleteFile(
+                  ${file.id},
+                  ${unitId},
+                  ${weekId}
+                )">
 
                 🗑 ELIMINAR
 
@@ -510,8 +705,6 @@ async function renderFiles(unitId, weekId) {
     </div>
 
 
-    <!-- BOTÓN AGREGAR -->
-
     <div class="add-file-container">
 
       <button
@@ -525,8 +718,6 @@ async function renderFiles(unitId, weekId) {
     </div>
 
 
-    <!-- SELECTOR -->
-
     <input
       type="file"
       id="file-picker"
@@ -536,8 +727,6 @@ async function renderFiles(unitId, weekId) {
   `;
 
 
-  // Volver a semanas
-
   document
     .getElementById("back-weeks")
     .addEventListener(
@@ -545,8 +734,6 @@ async function renderFiles(unitId, weekId) {
       () => renderWeeks(unitId)
     );
 
-
-  // Botón agregar
 
   document
     .getElementById("add-file")
@@ -562,8 +749,6 @@ async function renderFiles(unitId, weekId) {
     );
 
 
-  // Seleccionar archivos
-
   document
     .getElementById("file-picker")
     .addEventListener(
@@ -574,8 +759,12 @@ async function renderFiles(unitId, weekId) {
           this.files;
 
 
-        if (archivos.length === 0) {
+        if (
+          archivos.length === 0
+        ) {
+
           return;
+
         }
 
 
@@ -587,15 +776,17 @@ async function renderFiles(unitId, weekId) {
           );
 
 
-          // Volver a cargar la semana
+          this.value = "";
 
-          renderFiles(
+
+          await renderFiles(
             unitId,
             weekId
           );
 
+        }
 
-        } catch (error) {
+        catch (error) {
 
           console.error(error);
 
@@ -612,7 +803,7 @@ async function renderFiles(unitId, weekId) {
 
 
 // ========================================
-// ABRIR / VER ARCHIVO
+// ABRIR ARCHIVO
 // ========================================
 
 function openFile(id) {
@@ -625,42 +816,66 @@ function openFile(id) {
 
 
   const store =
-    transaction.objectStore("files");
+    transaction.objectStore(
+      "files"
+    );
 
 
   const request =
     store.get(id);
 
 
-  request.onsuccess = () => {
+  request.onsuccess =
+    () => {
 
-    const data =
-      request.result;
+      const data =
+        request.result;
 
 
-    if (!data) {
+      if (!data) {
 
-      alert(
-        "No se encontró el archivo."
+        alert(
+          "No se encontró el archivo."
+        );
+
+        return;
+
+      }
+
+
+      const url =
+        URL.createObjectURL(
+          data.file
+        );
+
+
+      const nuevaVentana =
+        window.open(
+          url,
+          "_blank"
+        );
+
+
+      if (!nuevaVentana) {
+
+        alert(
+          "El navegador bloqueó la ventana. " +
+          "Permite ventanas emergentes para este sitio."
+        );
+
+      }
+
+
+      setTimeout(
+        () => {
+
+          URL.revokeObjectURL(url);
+
+        },
+        60000
       );
 
-      return;
-
-    }
-
-
-    const url =
-      URL.createObjectURL(
-        data.file
-      );
-
-
-    window.open(
-      url,
-      "_blank"
-    );
-
-  };
+    };
 
 }
 
@@ -669,7 +884,11 @@ function openFile(id) {
 // ELIMINAR ARCHIVO
 // ========================================
 
-function deleteFile(id, unitId, weekId) {
+function deleteFile(
+  id,
+  unitId,
+  weekId
+) {
 
   const confirmar =
     confirm(
@@ -678,7 +897,9 @@ function deleteFile(id, unitId, weekId) {
 
 
   if (!confirmar) {
+
     return;
+
   }
 
 
@@ -690,20 +911,120 @@ function deleteFile(id, unitId, weekId) {
 
 
   const store =
-    transaction.objectStore("files");
+    transaction.objectStore(
+      "files"
+    );
 
 
   store.delete(id);
 
 
-  transaction.oncomplete = () => {
+  transaction.oncomplete =
+    () => {
 
-    renderFiles(
-      unitId,
-      weekId
-    );
+      renderFiles(
+        unitId,
+        weekId
+      );
+
+    };
+
+
+  transaction.onerror =
+    () => {
+
+      alert(
+        "No se pudo eliminar el archivo."
+      );
+
+    };
+
+}
+
+
+// ========================================
+// ICONO SEGÚN TIPO
+// ========================================
+
+function getFileIcon(name) {
+
+  const extension =
+    name
+      .split(".")
+      .pop()
+      .toLowerCase();
+
+
+  const icons = {
+
+    pdf: "📕",
+
+    doc: "📘",
+    docx: "📘",
+
+    xls: "📗",
+    xlsx: "📗",
+
+    ppt: "📙",
+    pptx: "📙",
+
+    jpg: "🖼️",
+    jpeg: "🖼️",
+    png: "🖼️",
+    gif: "🖼️",
+
+    mp4: "🎬",
+    avi: "🎬",
+    mov: "🎬",
+
+    mp3: "🎵",
+    wav: "🎵",
+
+    zip: "🗜️",
+    rar: "🗜️",
+
+    txt: "📄",
+
+    html: "🌐",
+    css: "🎨",
+    js: "⚙️",
+    php: "🐘"
 
   };
+
+
+  return (
+    icons[extension] ||
+    "📄"
+  );
+
+}
+
+
+// ========================================
+// TIPO DE ARCHIVO
+// ========================================
+
+function getFileType(name) {
+
+  const extension =
+    name
+      .split(".")
+      .pop()
+      .toUpperCase();
+
+
+  if (
+    !extension ||
+    extension === name.toUpperCase()
+  ) {
+
+    return "ARCHIVO";
+
+  }
+
+
+  return extension;
 
 }
 
@@ -715,7 +1036,9 @@ function deleteFile(id, unitId, weekId) {
 function formatSize(bytes) {
 
   if (bytes === 0) {
+
     return "0 Bytes";
+
   }
 
 
@@ -735,11 +1058,15 @@ function formatSize(bytes) {
 
 
   return (
+
     Math.round(
+
       bytes /
       Math.pow(1024, i) *
       100
+
     ) / 100
+
   )
   + " "
   + sizes[i];
@@ -748,7 +1075,26 @@ function formatSize(bytes) {
 
 
 // ========================================
-// INICIAR BASE DE DATOS
+// SEGURIDAD
+// ========================================
+
+function escapeHTML(text) {
+
+  const div =
+    document.createElement("div");
+
+
+  div.textContent =
+    text;
+
+
+  return div.innerHTML;
+
+}
+
+
+// ========================================
+// INICIAR
 // ========================================
 
 openDB()
