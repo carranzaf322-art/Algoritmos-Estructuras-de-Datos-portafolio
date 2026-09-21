@@ -69,7 +69,7 @@ body {
             rgba(5, 5, 5, 0.72),
             rgba(8, 5, 4, 0.88)
         ),
-        url("assets/fondo.jpg");
+        url("fondo.jpg");
 
     background-size: cover;
     background-position: center;
