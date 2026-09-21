@@ -51,9 +51,7 @@ document.addEventListener("click", event => {
     showPage(page);
 
     if (page === "portfolio") {
-
         openExplorer();
-
     }
 
 });
@@ -74,7 +72,6 @@ document.addEventListener("input", event => {
             .toLowerCase()
             .trim();
 
-
     document
         .querySelectorAll(".file")
         .forEach(file => {
@@ -84,7 +81,6 @@ document.addEventListener("input", event => {
                     .querySelector(".file-name")
                     ?.textContent
                     .toLowerCase() || "";
-
 
             file.style.display =
                 name.includes(text)
@@ -123,7 +119,6 @@ async function getFiles(path) {
                 `${GITHUB_API}/${path}?t=${Date.now()}`
             );
 
-
         if (!response.ok) {
 
             console.error(
@@ -135,15 +130,12 @@ async function getFiles(path) {
 
         }
 
-
         const data =
             await response.json();
-
 
         if (!Array.isArray(data)) {
             return [];
         }
-
 
         return data.filter(file => {
 
@@ -194,7 +186,6 @@ function openExplorer() {
 
         </div>
 
-s
         <div class="folder-grid">
 
             ${units.map(unit => `
@@ -257,7 +248,6 @@ async function openWeeks(unitId) {
             item => item.id === unitId
         );
 
-
     portfolioView.innerHTML = `
 
         <div class="topbar">
@@ -276,7 +266,6 @@ async function openWeeks(unitId) {
 
         </div>
 
-
         <div class="explorer-header">
 
             <p class="eyebrow">
@@ -292,7 +281,6 @@ async function openWeeks(unitId) {
             </p>
 
         </div>
-
 
         <div class="week-grid">
 
@@ -531,13 +519,6 @@ async function openFiles(
 
         <div class="add-file-container">
 
-            <input
-                type="file"
-                id="pc-file"
-                style="display:none;"
-            >
-
-
             <button
                 class="btn primary"
                 id="add-file">
@@ -568,7 +549,7 @@ async function openFiles(
 
 
     // =================================================
-    // ABRIR EXPLORADOR DE WINDOWS
+    // ABRIR CARPETA DE GITHUB
     // =================================================
 
     document
@@ -577,52 +558,12 @@ async function openFiles(
             "click",
             () => {
 
-                const fileInput =
-                    document.getElementById("pc-file");
+                const githubFolder =
+                    `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/tree/${GITHUB_BRANCH}/documentos/${path}`;
 
-
-                fileInput.value = "";
-
-
-                fileInput.click();
-
-            }
-        );
-
-
-    // =================================================
-    // ARCHIVO SELECCIONADO
-    // =================================================
-
-    document
-        .getElementById("pc-file")
-        .addEventListener(
-            "change",
-            event => {
-
-                const file =
-                    event.target.files[0];
-
-
-                if (!file) {
-                    return;
-                }
-
-
-                alert(
-                    "Archivo seleccionado:\n\n" +
-                    file.name +
-                    "\n\n" +
-                    "Tamaño: " +
-                    formatSize(file.size) +
-                    "\n\n" +
-                    "Ahora el archivo está seleccionado desde tu PC."
-                );
-
-
-                console.log(
-                    "Archivo seleccionado:",
-                    file
+                window.open(
+                    githubFolder,
+                    "_blank"
                 );
 
             }
